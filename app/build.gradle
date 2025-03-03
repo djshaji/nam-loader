@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "org.acoustixaudio.namloader"
         minSdk 29
-        targetSdk 35
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -52,6 +52,8 @@ android {
             version '3.22.1'
         }
     }
+
+    ndkVersion '26.1.10909125'
 }
 
 dependencies {

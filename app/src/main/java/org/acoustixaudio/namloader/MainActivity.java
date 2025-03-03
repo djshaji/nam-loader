@@ -167,15 +167,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        setSpinnerFromDir(namSpinner, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/nam", null);
         namSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String m = namSpinner.getAdapter().getItem(i).toString();
+                if (m.isEmpty())
+                    return;
 
                 String dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/nam/" ;
                 Uri ri = Uri.parse("file://" + dir + m);
                 Log.d(TAG, String.format ("sending filename: %s", ri.getPath()));
-                AudioEngine.setAtomPort(0, 12, ri.getPath());
+//                for (int s = 0 ; s < 19 ; s ++) {
+//                    Log.i(TAG, "onItemSelected: port " + s + ' ' + AudioEngine.getControlName(0, s));
+//                }
+
+                AudioEngine.setAtomPort(0, 17, ri.getPath());
             }
 
             @Override
@@ -196,8 +203,6 @@ public class MainActivity extends AppCompatActivity {
 
         AudioEngine.setMainActivityClassName("org/acoustixaudio/namloader/MainActivity");
         AudioEngine.addPluginLazyLV2("libRatatouille.so", 0);
-
-        setSpinnerFromDir(namSpinner, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/nam", null);
     }
 
     private void startEffect() {
@@ -457,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
             return;
 
         int plugin = 0;
-        int control = 5;
+        int control = 17;
         DocumentFile file = DocumentFile.fromSingleUri(mainActivity, returnUri);
         Log.d(TAG, String.format("ayyo filename: %s [%s]", file.getName(), file.getUri()));
         String dir = context.getExternalFilesDir(
