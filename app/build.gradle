@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags ''
+                cppFlags '-g -Wl -fast'
                 arguments "-DANDROID_STL=c++_shared"
                 android.ndkVersion '26.1.10909125'
             }

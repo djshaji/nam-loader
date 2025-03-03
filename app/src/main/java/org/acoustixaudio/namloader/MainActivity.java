@@ -24,6 +24,9 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -101,6 +104,16 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, String.format ("folder exists: %s", folder.getAbsolutePath()));
         }
 
+        ActivityResultLauncher<String> mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
+                new ActivityResultCallback<Uri>() {
+                    @Override
+                    public void onActivityResult(Uri uri) {
+                        // Handle the returned Uri
+                        Log.i(TAG, "onActivityResult: " + uri);
+                        loadNAMModel(uri);
+                    }
+                });
+
         Button loadModel = findViewById(R.id.load_nam);
         loadModel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,8 +138,8 @@ public class MainActivity extends AppCompatActivity {
                 intent_upload.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 int requestCode = REQUEST_CODE_NAM;
-                mainActivity.startActivityForResult(intent_upload,requestCode);
-
+//                startActivityForResult(intent_upload,requestCode);
+                mGetContent.launch("*/*");
             }
         });
 
@@ -242,59 +255,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data, @NonNull ComponentCaller caller) {
+        Log.i(TAG, "onActivityResult: " + requestCode + " " + resultCode);
         super.onActivityResult(requestCode, resultCode, data, caller);
 
         if (requestCode == REQUEST_CODE_NAM && resultCode == RESULT_OK) {
-            Uri returnUri = data.getData();
-            int parse = requestCode - 10000;
-            int plugin = 0;
-            int control = 5;
-            DocumentFile file = DocumentFile.fromSingleUri(mainActivity, returnUri);
-            Log.d(TAG, String.format("ayyo filename: %s [%s]", file.getName(), file.getUri()));
-            Log.d(TAG, String.format("[load atom]: %d %d %d", requestCode, plugin, control));
-            String dir = context.getExternalFilesDir(
-                    Environment.DIRECTORY_DOWNLOADS) + "/nam" ;
 
-//                String basename = file.getName() ; //returnUri.getLastPathSegment();
-//                basename = basename.substring(basename.lastIndexOf(":") + 1);
-//                Log.d(TAG, String.format("[basename]: %s", basename));
-            String dest = dir + "/" + file.getName();
-            File fDir = new File(dir);
-            Spinner spinner = mainActivity.findViewById(R.id.nam_spinner);
-            if (!fDir.exists()) {
-                if (!fDir.mkdirs()) {
-                    alert("Cannot create directory", "Error loading model: " + dir);
-                    return;
-                }
-            }
-
-            String path = file.getName();
-            String ext = path.substring(path.toString().lastIndexOf('.') + 1);
-
-            Log.d(TAG, String.format("extension: %s", ext));
-            if (ext.equalsIgnoreCase("zip")) {
-                unzipNAMModel(dir, returnUri);
-                if (spinner == null) {
-                    Log.d(TAG, "onActivityResult: spinner is null! why???");
-                } else
-                    setSpinnerFromDir(spinner, dir, null);
-                return;
-            }
-
-            try {
-//                    copy (new File(file.getUri().getPath()), new File(dest));
-                copyFile(returnUri, Uri.parse("file://" + dest));
-            } catch (IOException e) {
-                alert("Error loading file", e.getMessage());
-                Log.e(TAG, "onActivityResult: ", e);
-                return;
-            }
-
-            Log.d(TAG, String.format("[copy file]: %s -> %s", returnUri.getPath(), dest));
-            Log.d(TAG, String.format("[load atom]: got filename %s", dest));
-            int selection = setSpinnerFromDir(spinner, dir, file.getName());
-            spinner.setSelection(selection);
-            AudioEngine.setAtomPort(plugin, control, dest);
         }
     }
 
@@ -485,5 +450,59 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return jsonObject;
+    }
+
+    void loadNAMModel (Uri returnUri) {
+        if (returnUri == null)
+            return;
+
+        int plugin = 0;
+        int control = 5;
+        DocumentFile file = DocumentFile.fromSingleUri(mainActivity, returnUri);
+        Log.d(TAG, String.format("ayyo filename: %s [%s]", file.getName(), file.getUri()));
+        String dir = context.getExternalFilesDir(
+                Environment.DIRECTORY_DOWNLOADS) + "/nam" ;
+
+//                String basename = file.getName() ; //returnUri.getLastPathSegment();
+//                basename = basename.substring(basename.lastIndexOf(":") + 1);
+//                Log.d(TAG, String.format("[basename]: %s", basename));
+        String dest = dir + "/" + file.getName();
+        File fDir = new File(dir);
+        Spinner spinner = mainActivity.findViewById(R.id.nam_spinner);
+        if (!fDir.exists()) {
+            if (!fDir.mkdirs()) {
+                alert("Cannot create directory", "Error loading model: " + dir);
+                return;
+            }
+        }
+
+        String path = file.getName();
+        String ext = path.substring(path.toString().lastIndexOf('.') + 1);
+
+        Log.d(TAG, String.format("extension: %s", ext));
+        if (ext.equalsIgnoreCase("zip")) {
+            unzipNAMModel(dir, returnUri);
+            if (spinner == null) {
+                Log.d(TAG, "onActivityResult: spinner is null! why???");
+            } else
+                setSpinnerFromDir(spinner, dir, null);
+            return;
+        }
+
+        try {
+//                    copy (new File(file.getUri().getPath()), new File(dest));
+            copyFile(returnUri, Uri.parse("file://" + dest));
+        } catch (IOException e) {
+            alert("Error loading file", e.getMessage());
+            Log.e(TAG, "onActivityResult: ", e);
+            return;
+        }
+
+        Log.d(TAG, String.format("[copy file]: %s -> %s", returnUri.getPath(), dest));
+        Log.d(TAG, String.format("[load atom]: got filename %s", dest));
+        int selection = setSpinnerFromDir(spinner, dir, file.getName());
+        spinner.setSelection(selection);
+        AudioEngine.setAtomPort(plugin, control, dest);
+
     }
 }
