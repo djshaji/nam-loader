@@ -1,8 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.NeuralAmpNAMAIDAXModelLoaderWithIR" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.NeuralAmpNAMAIDAXModelLoaderWithIR" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+         <item name="colorPrimary">#2196F3</item>
+         <item name="colorSecondary">#6CCFFF</item>
+         <item name="colorAccent">#00BCD4</item>
     </style>
 
     <style name="Theme.NeuralAmpNAMAIDAXModelLoaderWithIR" parent="Base.Theme.NeuralAmpNAMAIDAXModelLoaderWithIR" />

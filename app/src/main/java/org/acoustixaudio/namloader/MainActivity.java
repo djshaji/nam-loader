@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.ComponentCaller;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -35,7 +36,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.preference.PreferenceManager;
 
+import com.google.android.material.slider.Slider;
 import com.shajikhan.ladspa.amprack.AudioEngine;
 
 import org.json.JSONException;
@@ -55,6 +58,7 @@ import java.util.zip.ZipInputStream;
 public class MainActivity extends AppCompatActivity {
     private static final int AUDIO_EFFECT_REQUEST = 0;
     private static final String TAG = MainActivity.class.getName();
+    static SharedPreferences defaultSharedPreferences ;
 
     static {
         System.loadLibrary("amprack");
@@ -66,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
     MainActivity mainActivity ;
     private int REQUEST_CODE_NAM = 1;
     Spinner namSpinner, irSpinner ;
+    public static boolean proVersion = false ;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         ToggleButton onoff = findViewById(R.id.onoff);
         onoff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -110,7 +118,17 @@ public class MainActivity extends AppCompatActivity {
                     public void onActivityResult(Uri uri) {
                         // Handle the returned Uri
                         Log.i(TAG, "onActivityResult: " + uri);
-                        loadNAMModel(uri);
+                        loadNAMModel(uri, "nam", namSpinner, 1);
+                    }
+                });
+
+        ActivityResultLauncher<String> mGetIR = registerForActivityResult(new ActivityResultContracts.GetContent(),
+                new ActivityResultCallback<Uri>() {
+                    @Override
+                    public void onActivityResult(Uri uri) {
+                        // Handle the returned Uri
+                        Log.i(TAG, "onActivityResult: " + uri);
+                        loadNAMModel(uri, "ir", irSpinner, 13);
                     }
                 });
 
@@ -178,9 +196,9 @@ public class MainActivity extends AppCompatActivity {
                 String dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/nam/" ;
                 Uri ri = Uri.parse("file://" + dir + m);
                 Log.d(TAG, String.format ("sending filename: %s", ri.getPath()));
-//                for (int s = 0 ; s < 19 ; s ++) {
-//                    Log.i(TAG, "onItemSelected: port " + s + ' ' + AudioEngine.getControlName(0, s));
-//                }
+                for (int s = 0 ; s < 21 ; s ++) {
+                    Log.i(TAG, "onItemSelected: port " + s + ' ' + AudioEngine.getControlName(0, s));
+                }
 
                 AudioEngine.setAtomPort(0, 17, ri.getPath());
             }
@@ -191,6 +209,119 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Slider gainIn = findViewById(R.id.slider_input);
+        gainIn.addOnChangeListener(new Slider.OnChangeListener() {
+            @Override
+            public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+                AudioEngine.setPluginControl(0, 9, value);
+            }
+        });
+
+        Slider gainOut = findViewById(R.id.slider_output);
+        gainOut.addOnChangeListener(new Slider.OnChangeListener() {
+            @Override
+            public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+                AudioEngine.setPluginControl(0, 15, value);
+            }
+        });
+
+        Slider mix = findViewById(R.id.slider_mix);
+        mix.addOnChangeListener(new Slider.OnChangeListener() {
+            @Override
+            public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+                AudioEngine.setPluginControl(0, 18, value);
+            }
+        });
+
+        Button settingsBtn = findViewById(R.id.settings_btn);
+        settingsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(context, SettingsActivity.class));
+            }
+        });
+
+        irSpinner = findViewById(R.id.ir_spinner);
+        setSpinnerFromDir(irSpinner, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/ir", null);
+
+        Button irPre = findViewById(R.id.ir_pre);
+        Button irNext = findViewById(R.id.ir_next);
+
+        irPre.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int pos = irSpinner.getSelectedItemPosition();
+                pos -- ;
+                if (pos >= 0)
+                    irSpinner.setSelection(pos);
+
+            }
+        });
+
+        irNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int pos = irSpinner.getSelectedItemPosition();
+                pos ++ ;
+                if (pos < irSpinner.getAdapter().getCount())
+                    irSpinner.setSelection(pos);
+
+            }
+        });
+
+        irSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String m = irSpinner.getAdapter().getItem(i).toString();
+                if (m.isEmpty())
+                    return;
+
+                String dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/ir/" ;
+                Uri ri = Uri.parse("file://" + dir + m);
+                Log.d(TAG, String.format ("sending filename: %s", ri.getPath()));
+//                for (int s = 0 ; s < 19 ; s ++) {
+//                    Log.i(TAG, "onItemSelected: port " + s + ' ' + AudioEngine.getControlName(0, s));
+//                }
+
+                AudioEngine.setAtomPort(0, 13, ri.getPath());
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        Button irLoad = findViewById(R.id.ir_load);
+        irLoad.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent_upload = new Intent();
+                intent_upload.setType("application/json");
+                String mimetype = MimeTypeMap.getSingleton().getMimeTypeFromExtension("json");
+                String [] mimeTypes = {
+                        "*/*",
+                        "text/*",
+                        "application/x-zip",
+                        "application/ld-json",
+                        "application/json",
+                        mimetype
+                };
+
+
+                intent_upload.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+
+                intent_upload.setAction(Intent.ACTION_OPEN_DOCUMENT);
+                intent_upload.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                intent_upload.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                int requestCode = REQUEST_CODE_NAM;
+//                startActivityForResult(intent_upload,requestCode);
+                mGetIR.launch("*/*");
+
+            }
+        });
         AudioEngine.create();
         AudioEngine.setExportFormat(2);
         AudioEngine.popFunction(); // this disables the meter output
@@ -457,23 +588,21 @@ public class MainActivity extends AppCompatActivity {
         return jsonObject;
     }
 
-    void loadNAMModel (Uri returnUri) {
+    void loadNAMModel (Uri returnUri, String what, Spinner spinner, int control) {
         if (returnUri == null)
             return;
 
         int plugin = 0;
-        int control = 17;
         DocumentFile file = DocumentFile.fromSingleUri(mainActivity, returnUri);
         Log.d(TAG, String.format("ayyo filename: %s [%s]", file.getName(), file.getUri()));
         String dir = context.getExternalFilesDir(
-                Environment.DIRECTORY_DOWNLOADS) + "/nam" ;
+                Environment.DIRECTORY_DOWNLOADS) + "/" + what ;
 
 //                String basename = file.getName() ; //returnUri.getLastPathSegment();
 //                basename = basename.substring(basename.lastIndexOf(":") + 1);
 //                Log.d(TAG, String.format("[basename]: %s", basename));
         String dest = dir + "/" + file.getName();
         File fDir = new File(dir);
-        Spinner spinner = mainActivity.findViewById(R.id.nam_spinner);
         if (!fDir.exists()) {
             if (!fDir.mkdirs()) {
                 alert("Cannot create directory", "Error loading model: " + dir);
@@ -510,4 +639,29 @@ public class MainActivity extends AppCompatActivity {
         AudioEngine.setAtomPort(plugin, control, dest);
 
     }
+
+
+    public static void applySettings () {
+        String input = defaultSharedPreferences.getString("input", "-1");
+        String output = defaultSharedPreferences.getString("output", "-1");
+        Log.d(TAG, "applyPreferences: [devices] " + String.format("input: %s, output: %s", input, output));
+
+        Log.d(TAG, "applyPreferencesDevices: " + String.format(
+                "[preferences] playback device: %s, recording device: %s",
+                output, input
+        ));
+
+        try {
+            if (!input.equals("default") && ! input.equals("-1"))
+                AudioEngine.setRecordingDeviceId(new Integer(input));
+            if (!output.equals("default") && ! input.equals("-1"))
+                AudioEngine.setPlaybackDeviceId(new Integer(output));
+
+//            AudioEngine.setLamePreset(Integer.parseInt(defaultSharedPreferences.getString("lame_preset", "1001")));
+            AudioEngine.setExportFormat(Integer.parseInt(defaultSharedPreferences.getString("format", "2")));
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "applySettings: ", e);
+        }
+    }
+
 }
