@@ -9,7 +9,7 @@
     tools:context=".MainActivity">
 
     <ImageView
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/athiya"
@@ -18,33 +18,11 @@
         android:alpha=".5"
         app:tint="@color/cardview_dark_background" />
     <LinearLayout
+        android:layout_margin="10dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:visibility="gone"
-            android:layout_margin="10dp"
-            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_margin="10dp"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/nam3"/>
-            <TextView
-                android:gravity="center"
-                android:layout_width="wrap_content"
-                android:fontFamily="@font/barrio"
-                android:textSize="30dp"
-                android:textColor="@color/white"
-                android:layout_gravity="center"
-                android:layout_height="wrap_content"
-                android:text="Neural Amp"/>
-        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_gravity="center"
@@ -91,12 +69,53 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_width="wrap_content"
+            android:padding="5dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:visibility="visible"
+            android:background="@drawable/semi_trans"
+            app:layout_constraintTop_toTopOf="parent"
+            android:id="@+id/last_recorded_box">
+            <ToggleButton
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:textOn=""
+                android:textOff=""
+                android:background="@drawable/baseline_play_arrow_24"
+                android:id="@+id/last_play"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/last_filename"/>
+            <Button
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/baseline_mode_edit_24"
+                android:layout_gravity="end"
+                android:id="@+id/last_edit"/>
+            <Button
+                android:layout_gravity="end"
+                android:gravity="end"
+                android:layout_margin="0dp"
+                android:padding="5dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:id="@+id/share_last"
+                android:background="@drawable/baseline_share_24"/>
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Choose Model"
             android:textColor="@color/white"
-            android:layout_margin="20dp"
+            android:layout_margin="10dp"
             android:fontFamily="@font/barrio"
             android:textSize="20dp"/>
         <LinearLayout
@@ -139,7 +158,7 @@
             android:layout_height="wrap_content"
             android:text="Choose Impulse Response"
             android:textColor="@color/white"
-            android:layout_margin="20dp"
+            android:layout_margin="10dp"
             android:fontFamily="@font/barrio"
             android:textSize="20dp"/>
         <LinearLayout
@@ -179,7 +198,7 @@
 
         <com.google.android.material.slider.Slider
             android:layout_width="match_parent"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:valueFrom="-20"
             android:valueTo="20"
             android:value="1"
@@ -196,7 +215,7 @@
 
         <com.google.android.material.slider.Slider
             android:layout_width="match_parent"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:valueFrom="-20"
             android:value="1"
             android:valueTo="20"
@@ -212,7 +231,7 @@
             android:text="Output Gain"/>
         <com.google.android.material.slider.Slider
             android:layout_width="match_parent"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:valueFrom="0"
             android:valueTo="1"
             android:value="1"
@@ -226,5 +245,32 @@
             android:textSize="20dp"
             android:layout_gravity="center"
             android:text="In / Out Mix"/>
+    </LinearLayout>
+
+    <LinearLayout
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="visible"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_margin="10dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/nam3"/>
+        <TextView
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:fontFamily="@font/barrio"
+            android:textSize="30dp"
+            android:textColor="@color/white"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:text="Neural Amp"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

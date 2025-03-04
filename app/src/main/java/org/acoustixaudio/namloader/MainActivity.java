@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.browse.MediaBrowser;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,7 +21,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -38,6 +41,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
 import com.google.android.material.slider.Slider;
 import com.shajikhan.ladspa.amprack.AudioEngine;
 
@@ -51,7 +58,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.StringJoiner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -68,10 +78,14 @@ public class MainActivity extends AppCompatActivity {
     private static Context context;
     private String dir = null;
     MainActivity mainActivity ;
+    ToggleButton record ;
     private int REQUEST_CODE_NAM = 1;
     Spinner namSpinner, irSpinner ;
     public static boolean proVersion = false ;
-
+    private String filename, basename;
+    LinearLayout lastRecordedBox;
+    TextView lastFilename;
+    private ExoPlayer mediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        mediaPlayer = new ExoPlayer.Builder(context).build();
 
         ToggleButton onoff = findViewById(R.id.onoff);
         onoff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -322,6 +337,109 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        lastFilename = findViewById(R.id.last_filename);
+        ToggleButton lastPlayPause = findViewById(R.id.last_play);
+
+        lastFilename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                lastPlayPause.performClick();
+            }
+        });
+
+        lastPlayPause.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.i(TAG, "onCheckedChanged: playing " + filename);
+                    mediaPlayer.play();
+                    buttonView.setBackground(getResources().getDrawable(R.drawable.baseline_pause_24));
+                } else {
+                    Log.i(TAG, "onCheckedChanged: pause");
+                    mediaPlayer.pause();
+                    buttonView.setBackground(getResources().getDrawable(R.drawable.baseline_play_arrow_24));
+                }
+            }
+        });
+
+        mediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                Log.i(TAG, "onIsPlayingChanged: " + isPlaying);
+                Player.Listener.super.onIsPlayingChanged(isPlaying);
+                if (! isPlaying) {
+                    lastPlayPause.setChecked(false);
+                    MediaItem mediaItem = MediaItem.fromUri(filename + ".mp3");
+                    mediaPlayer.setMediaItem(mediaItem);
+                    mediaPlayer.prepare();
+                }
+            }
+        });
+
+        mediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                Player.Listener.super.onPlayerError(error);
+                Log.e(TAG, "onPlayerError: ", error);
+                Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlayerErrorChanged(@Nullable PlaybackException error) {
+                Player.Listener.super.onPlayerErrorChanged(error);
+                if (error != null)
+                    Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "onPlayerErrorChanged: ", error);
+            }
+        });
+
+        record = findViewById(R.id.rec);
+        record.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    lastPlayPause.setChecked(false);
+//                    buttonView.setCompoundDrawablesWithIntrinsicBounds(null,getResources().getDrawable(R.drawable.stop1),null,null);
+
+                    SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH.mm.ss");
+                    Date date = new Date();
+                    basename = formatter.format(date);
+                    filename = new StringJoiner("/").add (dir).add (basename).toString();
+                    AudioEngine.setFileName(filename);
+                    applySettings();
+                    Log.d(TAG, String.format ("[filename]: %s", filename));
+
+//                    if (! running)
+//                        startEffect();
+
+
+                    if (! onoff.isChecked())
+                        onoff.setChecked(true);
+
+                    AudioEngine.toggleRecording(true);
+                    lastRecordedBox.setVisibility(View.GONE);
+                } else {
+//                    buttonView.setCompoundDrawablesWithIntrinsicBounds(null,getResources().getDrawable(R.drawable.record),null,null);
+
+                    if (! onoff.isChecked ())
+                        stopEffect();
+
+                    lastFilename.setText(new File (filename).getName());
+                    lastRecordedBox.setVisibility(View.VISIBLE);
+
+                    mediaPlayer = new ExoPlayer.Builder(context).build();
+                    MediaItem mediaItem = MediaItem.fromUri(filename + ".mp3");
+                    mediaPlayer.setMediaItem(mediaItem);
+                    mediaPlayer.prepare();
+
+                    Log.i(TAG, "onCheckedChanged: set media item " + filename);
+                }
+            }
+        });
+
         AudioEngine.create();
         AudioEngine.setExportFormat(2);
         AudioEngine.popFunction(); // this disables the meter output
@@ -338,6 +456,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void startEffect() {
         Log.d(TAG, "Attempting to start");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH.mm.ss");
+        Date date = new Date();
+        basename = formatter.format(date);
+        filename = new StringJoiner("/").add (getExternalFilesDir(DIRECTORY_MUSIC).getPath()).add (basename).toString();
+
+        AudioEngine.setFileName(filename);
+        applySettings();
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (!isRecordPermissionGranted()) {
