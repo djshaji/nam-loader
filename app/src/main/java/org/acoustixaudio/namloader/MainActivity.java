@@ -6,6 +6,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ComponentCaller;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
@@ -21,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -35,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -86,6 +90,11 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout lastRecordedBox;
     TextView lastFilename;
     private ExoPlayer mediaPlayer;
+    String [] fileTypes = {
+            ".wav",
+            ".ogg",
+            ".mp3"
+    } ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +155,8 @@ public class MainActivity extends AppCompatActivity {
                         loadNAMModel(uri, "ir", irSpinner, 13);
                     }
                 });
+
+        lastRecordedBox = findViewById(R.id.last_recorded_box);
 
         Button loadModel = findViewById(R.id.load_nam);
         loadModel.setOnClickListener(new View.OnClickListener() {
@@ -273,6 +284,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        Button lastShare = findViewById(R.id.share_last);
+
+        lastShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (filename != null)
+                    shareFile(new File(filename + ".mp3"));
+            }
+        });
+
         irNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -338,6 +360,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ((Button) findViewById(R.id.recordings)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(context, Recordings.class));
+            }
+        });
+
         lastFilename = findViewById(R.id.last_filename);
         ToggleButton lastPlayPause = findViewById(R.id.last_play);
 
@@ -370,7 +399,8 @@ public class MainActivity extends AppCompatActivity {
                 Player.Listener.super.onIsPlayingChanged(isPlaying);
                 if (! isPlaying) {
                     lastPlayPause.setChecked(false);
-                    MediaItem mediaItem = MediaItem.fromUri(filename + ".mp3");
+                    MediaItem mediaItem = MediaItem.fromUri(filename +
+                            fileTypes [Integer.parseInt(defaultSharedPreferences.getString("format", "2"))]);
                     mediaPlayer.setMediaItem(mediaItem);
                     mediaPlayer.prepare();
                 }
@@ -396,6 +426,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button renameLast = findViewById(R.id.last_edit);
+        renameLast.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                renameFile(basename, -1);
+            }
+        });
+
+
         record = findViewById(R.id.rec);
         record.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -408,8 +447,8 @@ public class MainActivity extends AppCompatActivity {
                     Date date = new Date();
                     basename = formatter.format(date);
                     filename = new StringJoiner("/").add (dir).add (basename).toString();
-                    AudioEngine.setFileName(filename);
                     applySettings();
+                    AudioEngine.setFileName(filename);
                     Log.d(TAG, String.format ("[filename]: %s", filename));
 
 //                    if (! running)
@@ -431,7 +470,8 @@ public class MainActivity extends AppCompatActivity {
                     lastRecordedBox.setVisibility(View.VISIBLE);
 
                     mediaPlayer = new ExoPlayer.Builder(context).build();
-                    MediaItem mediaItem = MediaItem.fromUri(filename + ".mp3");
+                    MediaItem mediaItem = MediaItem.fromUri(filename +
+                            fileTypes [Integer.parseInt(defaultSharedPreferences.getString("format", "2"))]);
                     mediaPlayer.setMediaItem(mediaItem);
                     mediaPlayer.prepare();
 
@@ -476,6 +516,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopEffect() {
         if (!running) return;
+
+        if (record.isChecked()) {
+            record.setChecked(false);
+        }
 
         Log.d(TAG, "Playing, attempting to stop, state: " + running);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -788,6 +832,86 @@ public class MainActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             Log.e(TAG, "applySettings: ", e);
         }
+    }
+
+    public void renameFile (String oldName, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = mainActivity.getLayoutInflater();
+        LinearLayout linearLayout = (LinearLayout) inflater.inflate(R.layout.get_filename, null);
+        EditText textView = linearLayout.findViewById(R.id.filename);
+        TextView title = linearLayout.findViewById(R.id.preset_name);
+        title.setText("Enter filename");
+        textView.setText(oldName);
+
+
+        builder.setView(linearLayout)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        CharSequence filename = textView.getText() ;
+                        if (filename.equals("") || filename == null || filename.equals(oldName))
+                            return;
+
+                        File file = new File(new StringJoiner("/").add (mainActivity.getExternalFilesDir(DIRECTORY_MUSIC).getAbsolutePath()).add (oldName).toString() + ".mp3");
+                        file.renameTo(new File(new StringJoiner("/").add (mainActivity.getExternalFilesDir(DIRECTORY_MUSIC).getAbsolutePath()).add (filename).toString() + ".mp3"))  ;
+                        mainActivity.lastFilename.setText(filename);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        AlertDialog.Builder b = new AlertDialog.Builder(context);
+                        b.setMessage("you want to delete this recording?")
+                                .setTitle("Are you sure")
+                                .setIcon(R.drawable.baseline_delete_24)
+                                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        File f = new File (filename + ".mp3");
+                                        if (f.delete()) {
+                                            Toast.makeText(MainActivity.this, "Recording deleted", Toast.LENGTH_SHORT).show();
+                                            lastRecordedBox.setVisibility(View.GONE);
+                                        } else {
+                                            Toast.makeText(MainActivity.this, "Cannot delete file", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }).setNegativeButton("Cancel", null);
+                        b.show();
+                    }
+                });
+
+        builder.show();
+    }
+
+    public static void shareFile(File file) {
+        Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+        Uri contentUri = null;
+        try {
+            contentUri = FileProvider.getUriForFile(context, "org.acoustixaudio.tonesmith.fileprovider", file);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            Log.e(TAG, "shareFile: ", illegalArgumentException);
+            Toast.makeText(context, illegalArgumentException.getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        intentShareFile.setType("audio/*");
+        intentShareFile.putExtra(Intent.EXTRA_STREAM, contentUri);
+
+        intentShareFile.putExtra(Intent.EXTRA_SUBJECT,
+                "Sharing Audio File...");
+        intentShareFile.putExtra(Intent.EXTRA_TEXT, context.getResources().getString(R.string.app_name) + " recorded audio ...");
+
+        intentShareFile.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        context.startActivity(Intent.createChooser(intentShareFile, "Share Audio File"));
+
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mediaPlayer.stop();
     }
 
 }
