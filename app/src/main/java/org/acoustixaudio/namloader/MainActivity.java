@@ -1,6 +1,7 @@
 package org.acoustixaudio.namloader;
 
 import static android.os.Environment.DIRECTORY_MUSIC;
+import static android.view.View.GONE;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     private String dir = null;
     MainActivity mainActivity ;
     ToggleButton record ;
+    boolean nag = true ;
     private int REQUEST_CODE_NAM = 1;
     Spinner namSpinner, irSpinner ;
     public static boolean proVersion = false ;
@@ -459,7 +461,7 @@ public class MainActivity extends AppCompatActivity {
                         onoff.setChecked(true);
 
                     AudioEngine.toggleRecording(true);
-                    lastRecordedBox.setVisibility(View.GONE);
+                    lastRecordedBox.setVisibility(GONE);
                 } else {
 //                    buttonView.setCompoundDrawablesWithIntrinsicBounds(null,getResources().getDrawable(R.drawable.record),null,null);
 
@@ -492,6 +494,13 @@ public class MainActivity extends AppCompatActivity {
 
         AudioEngine.setMainActivityClassName("org/acoustixaudio/namloader/MainActivity");
         AudioEngine.addPluginLazyLV2("libRatatouille.so", 0);
+
+        proVersion = true ;
+
+        if (proVersion) {
+            findViewById(R.id.premium).setVisibility(GONE);
+            ((TextView) findViewById(R.id.title)).setText("Neural Amp Pro");
+        }
     }
 
     private void startEffect() {
@@ -524,6 +533,13 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Playing, attempting to stop, state: " + running);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         running = !AudioEngine.setEffectOn(false);
+
+        if (! proVersion) {
+            if (nag) {
+                nag = false ;
+                startActivity(new Intent(context, Purchase.class));
+            }
+        }
     }
 
     private boolean isRecordPermissionGranted() {
@@ -871,7 +887,7 @@ public class MainActivity extends AppCompatActivity {
                                         File f = new File (filename + ".mp3");
                                         if (f.delete()) {
                                             Toast.makeText(MainActivity.this, "Recording deleted", Toast.LENGTH_SHORT).show();
-                                            lastRecordedBox.setVisibility(View.GONE);
+                                            lastRecordedBox.setVisibility(GONE);
                                         } else {
                                             Toast.makeText(MainActivity.this, "Cannot delete file", Toast.LENGTH_SHORT).show();
                                         }

@@ -3,20 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@color/black"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
     <ImageView
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/athiya"
-        android:scaleType="centerCrop"
-        android:tintMode="screen"
-        android:alpha=".5"
-        app:tint="@color/cardview_dark_background" />
+        android:src="@drawable/bg"
+        android:alpha=".3"
+        android:scaleType="centerCrop"/>
     <LinearLayout
         android:layout_margin="10dp"
         android:layout_width="match_parent"
@@ -39,6 +36,7 @@
                 android:text="Power"
                 android:textColor="@color/white" />
             <ToggleButton
+                android:fontFamily="@font/comfortaa"
                 android:layout_margin="5dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -55,23 +53,41 @@
             <ToggleButton
                 android:layout_margin="5dp"
                 android:layout_width="wrap_content"
+                android:fontFamily="@font/comfortaa"
                 android:layout_height="wrap_content"
                 android:id="@+id/rec"/>
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
             <Button
+                android:layout_gravity="center"
                 android:id="@+id/settings_btn"
                 android:padding="0dp"
                 android:layout_marginLeft="10dp"
-                android:layout_width="32dp"
+                android:layout_width="wrap_content"
+                android:text="Settings"
+                android:textColor="@color/white"
+                android:fontFamily="@font/barrio"
                 android:layout_height="wrap_content"
                 android:background="#00000000"
                 android:drawableLeft="@drawable/baseline_settings_24"/>
 
             <Button
+                android:layout_gravity="center"
                 android:id="@+id/recordings"
                 android:padding="0dp"
                 android:layout_marginLeft="10dp"
-                android:layout_width="32dp"
+                android:layout_width="wrap_content"
+                android:textColor="@color/white"
+                android:text="Recordings"
+                android:fontFamily="@font/barrio"
                 android:layout_height="wrap_content"
                 android:background="#00000000"
                 android:drawableLeft="@drawable/baseline_library_music_24"/>
@@ -87,7 +103,7 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:layout_gravity="center"
-            android:visibility="visible"
+            android:visibility="gone"
             android:background="@drawable/semi_trans"
             app:layout_constraintTop_toTopOf="parent"
             android:id="@+id/last_recorded_box">
@@ -211,9 +227,11 @@
             android:valueFrom="-20"
             android:valueTo="20"
             android:value="1"
+            android:visibility="gone"
             android:layout_height="wrap_content"
             android:id="@+id/slider_input"/>
         <TextView
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
@@ -243,6 +261,7 @@
             android:layout_marginTop="10dp"
             android:valueFrom="0"
             android:valueTo="1"
+            android:visibility="gone"
             android:value="1"
             android:layout_height="wrap_content"
             android:id="@+id/slider_mix"/>
@@ -251,9 +270,22 @@
             android:layout_height="wrap_content"
             android:textColor="@color/white"
             android:fontFamily="@font/barrio"
+            android:visibility="gone"
             android:textSize="20dp"
             android:layout_gravity="center"
             android:text="In / Out Mix"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Get Premium"
+            android:textColor="@color/white"
+            android:fontFamily="@font/comfortaa"
+            android:layout_gravity="center"
+            android:layout_margin="20dp"
+            android:textSize="20dp"
+            android:id="@+id/premium"
+            android:drawableLeft="@drawable/baseline_workspace_premium_24"/>
     </LinearLayout>
 
     <LinearLayout
@@ -277,6 +309,7 @@
             android:layout_width="wrap_content"
             android:fontFamily="@font/barrio"
             android:textSize="30dp"
+            android:id="@+id/title"
             android:textColor="@color/white"
             android:layout_gravity="center"
             android:layout_height="wrap_content"
