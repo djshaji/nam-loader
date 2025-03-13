@@ -173,7 +173,6 @@
             android:layout_height="wrap_content"
             android:text="Load Model"
             android:textColor="@color/white"
-            android:background="#00000000"
             android:fontFamily="@font/barrio"
             android:textSize="20dp"
             android:layout_gravity="center"/>
@@ -216,7 +215,6 @@
             android:layout_height="wrap_content"
             android:text="Load IR File"
             android:textColor="@color/white"
-            android:background="#00000000"
             android:fontFamily="@font/barrio"
             android:textSize="20dp"
             android:layout_gravity="center"/>

@@ -10,18 +10,18 @@ android {
         applicationId "org.acoustixaudio.namloader"
         minSdk 29
         targetSdk 34
-        versionCode 2
-        versionName "1.0"
+        versionCode 4
+        versionName '1.2'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags '-g -Wl -fast'
+                cppFlags '-Wl -fast -DCMAKE_BUILD_TYPE=Release'
                 arguments "-DANDROID_STL=c++_shared"
                 android.ndkVersion '26.1.10909125'
             }
         }
-        versionNameSuffix 'magic-bunny'
+        versionNameSuffix '-magic-bunny'
     }
 
     buildTypes {
@@ -31,7 +31,7 @@ android {
         }
 
         debug {
-            debuggable true
+            debuggable false
         }
     }
 
